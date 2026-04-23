@@ -1,0 +1,65 @@
+name: datavault_observability
+version: "1.0.0"
+config-version: 2
+
+profile: datavault
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+require-dbt-version: [">=1.8.0", "<2.0.0"]
+
+vars:
+  snapshot_timestamp: "current_timestamp"
+  record_source_default: "dbt_seed"
+  load_date: "current_timestamp"
+
+seeds:
+  datavault_observability:
+    +quote_columns: false
+    +schema: raw
+
+models:
+  datavault_observability:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +materialized: view
+      +schema: staging
+    raw_vault:
+      +schema: raw_vault
+      hubs:
+        +materialized: incremental
+        +on_schema_change: "append_new_columns"
+      links:
+        +materialized: incremental
+        +on_schema_change: "append_new_columns"
+      satellites:
+        +materialized: incremental
+        +on_schema_change: "append_new_columns"
+    business_vault:
+      +materialized: table
+      +schema: business_vault
+    marts:
+      +materialized: table
+      +schema: marts
+
+snapshots:
+  datavault_observability:
+    +target_schema: snapshots
+
+on-run-start:
+  - "{{ log('Starting dbt run for target=' ~ target.name, info=true) }}"
+
+on-run-end:
+  - "{{ log('Finished dbt run', info=true) }}"

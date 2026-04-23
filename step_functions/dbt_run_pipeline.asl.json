@@ -1,0 +1,183 @@
+{
+  "Comment": "dbt run pipeline orchestrated via Step Functions — parity with the Airflow DAG",
+  "StartAt": "DbtDeps",
+  "States": {
+    "DbtDeps": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "TaskDefinition": "dbt-runner:latest",
+        "LaunchType": "FARGATE",
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "dbt",
+              "Command.$": "States.Array('deps')"
+            }
+          ]
+        }
+      },
+      "Next": "DbtSeed"
+    },
+    "DbtSeed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "TaskDefinition": "dbt-runner:latest",
+        "LaunchType": "FARGATE",
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "dbt",
+              "Command.$": "States.Array('seed','--target','prod')"
+            }
+          ]
+        }
+      },
+      "Next": "ParallelVaults"
+    },
+    "ParallelVaults": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "RunHubs",
+          "States": {
+            "RunHubs": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::ecs:runTask.sync",
+              "Parameters": {
+                "TaskDefinition": "dbt-runner:latest",
+                "LaunchType": "FARGATE",
+                "Overrides": {
+                  "ContainerOverrides": [
+                    {
+                      "Name": "dbt",
+                      "Command.$": "States.Array('run','--select','models/raw_vault/hubs','--target','prod')"
+                    }
+                  ]
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "RunLinks",
+          "States": {
+            "RunLinks": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::ecs:runTask.sync",
+              "Parameters": {
+                "TaskDefinition": "dbt-runner:latest",
+                "LaunchType": "FARGATE",
+                "Overrides": {
+                  "ContainerOverrides": [
+                    {
+                      "Name": "dbt",
+                      "Command.$": "States.Array('run','--select','models/raw_vault/links','--target','prod')"
+                    }
+                  ]
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "RunSatellites"
+    },
+    "RunSatellites": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "TaskDefinition": "dbt-runner:latest",
+        "LaunchType": "FARGATE",
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "dbt",
+              "Command.$": "States.Array('run','--select','models/raw_vault/satellites','--target','prod')"
+            }
+          ]
+        }
+      },
+      "Next": "RunBusinessVault"
+    },
+    "RunBusinessVault": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "TaskDefinition": "dbt-runner:latest",
+        "LaunchType": "FARGATE",
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "dbt",
+              "Command.$": "States.Array('run','--select','models/business_vault','--target','prod')"
+            }
+          ]
+        }
+      },
+      "Next": "RunMarts"
+    },
+    "RunMarts": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "TaskDefinition": "dbt-runner:latest",
+        "LaunchType": "FARGATE",
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "dbt",
+              "Command.$": "States.Array('run','--select','models/marts','--target','prod')"
+            }
+          ]
+        }
+      },
+      "Next": "DbtTest"
+    },
+    "DbtTest": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "TaskDefinition": "dbt-runner:latest",
+        "LaunchType": "FARGATE",
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "dbt",
+              "Command.$": "States.Array('test','--target','prod')"
+            }
+          ]
+        }
+      },
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "NotifyFailure"
+        }
+      ],
+      "Next": "NotifySuccess"
+    },
+    "NotifySuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:us-east-1:000000000000:dbt-runs",
+        "Message": "dbt Data Vault refresh succeeded"
+      },
+      "End": true
+    },
+    "NotifyFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:us-east-1:000000000000:dbt-runs",
+        "Message.$": "$.error"
+      },
+      "End": true
+    }
+  }
+}

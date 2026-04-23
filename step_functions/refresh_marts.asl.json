@@ -1,0 +1,34 @@
+{
+  "Comment": "Downstream mart refresh — fires via EventBridge when dbt runs complete",
+  "StartAt": "DbtDocs",
+  "States": {
+    "DbtDocs": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "TaskDefinition": "dbt-runner:latest",
+        "LaunchType": "FARGATE",
+        "Overrides": {
+          "ContainerOverrides": [
+            {
+              "Name": "dbt",
+              "Command.$": "States.Array('docs','generate','--target','prod')"
+            }
+          ]
+        }
+      },
+      "Next": "InvalidateSupersetCache"
+    },
+    "InvalidateSupersetCache": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "invalidate-superset-cache",
+        "Payload": {
+          "datasets": ["fct_orders_daily", "dim_customers", "dim_products"]
+        }
+      },
+      "End": true
+    }
+  }
+}

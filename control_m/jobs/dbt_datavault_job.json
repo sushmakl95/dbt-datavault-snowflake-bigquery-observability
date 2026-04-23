@@ -1,0 +1,88 @@
+{
+  "Defaults": {
+    "Folder::DV_DAILY": {
+      "Type": "Folder",
+      "ControlmServer": "ctm-prod",
+      "SiteStandard": "STD-DATA-ENG",
+      "RunAs": "svc_dbt",
+      "Application": "Analytics",
+      "SubApplication": "DataVault",
+      "Description": "Daily Data Vault refresh"
+    }
+  },
+  "DV_DAILY": {
+    "Type": "Folder",
+    "dbt_deps": {
+      "Type": "Job:Command",
+      "Command": "dbt deps --profiles-dir /opt/dbt/profiles",
+      "Host": "dbt-runner-01",
+      "When": {
+        "Schedule": "02:00",
+        "RerunLimit": { "Value": 3 }
+      },
+      "rerunInterval": "00:10",
+      "Application": "Analytics",
+      "SubApplication": "DataVault"
+    },
+    "dbt_seed": {
+      "Type": "Job:Command",
+      "Command": "dbt seed --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01",
+      "RetroactiveOrder": true
+    },
+    "dbt_hubs": {
+      "Type": "Job:Command",
+      "Command": "dbt run --select tag:hub --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01"
+    },
+    "dbt_links": {
+      "Type": "Job:Command",
+      "Command": "dbt run --select tag:link --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01"
+    },
+    "dbt_satellites": {
+      "Type": "Job:Command",
+      "Command": "dbt run --select tag:satellite --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01"
+    },
+    "dbt_business_vault": {
+      "Type": "Job:Command",
+      "Command": "dbt run --select business_vault.* --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01"
+    },
+    "dbt_marts": {
+      "Type": "Job:Command",
+      "Command": "dbt run --select marts.* --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01"
+    },
+    "dbt_test": {
+      "Type": "Job:Command",
+      "Command": "dbt test --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01"
+    },
+    "Flow": {
+      "Type": "Flow",
+      "Sequence": [
+        "dbt_deps",
+        "dbt_seed",
+        "dbt_hubs",
+        "dbt_links",
+        "dbt_satellites",
+        "dbt_business_vault",
+        "dbt_marts",
+        "dbt_test"
+      ]
+    },
+    "OnSuccess": {
+      "Type": "Notification:Mail",
+      "Message": "DV_DAILY succeeded",
+      "To": "data-platform@example.com"
+    },
+    "OnFailure": {
+      "Type": "Notification:Mail",
+      "Message": "DV_DAILY failed — see Control-M run logs",
+      "To": "data-platform-oncall@example.com",
+      "Urgency": "Very"
+    }
+  }
+}

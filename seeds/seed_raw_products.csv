@@ -1,0 +1,9 @@
+product_id,sku,name,category,unit_price,active
+p-1,SKU-001,Wireless Headphones,electronics,149.99,true
+p-2,SKU-002,Smart Watch,electronics,249.99,true
+p-3,SKU-003,Running Shoes,apparel,89.99,true
+p-4,SKU-004,Yoga Mat,fitness,29.99,true
+p-5,SKU-005,Coffee Maker,home,79.99,true
+p-6,SKU-006,Desk Lamp,home,39.99,false
+p-7,SKU-007,Novel: The Lakehouse,books,19.99,true
+p-8,SKU-008,Notebook,stationery,9.99,true

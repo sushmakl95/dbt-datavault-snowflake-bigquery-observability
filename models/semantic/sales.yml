@@ -1,0 +1,57 @@
+version: 2
+
+semantic_models:
+  - name: sales
+    description: Daily sales semantic model backed by the fct_orders_daily mart.
+    model: ref('fct_orders_daily')
+    defaults:
+      agg_time_dimension: ds
+
+    entities:
+      - name: order_status
+        type: primary
+        expr: status
+
+    dimensions:
+      - name: ds
+        type: time
+        type_params:
+          time_granularity: day
+      - name: country
+        type: categorical
+      - name: currency
+        type: categorical
+      - name: status
+        type: categorical
+
+    measures:
+      - name: total_gmv
+        description: Total GMV in original currency.
+        agg: sum
+        expr: gmv
+      - name: total_orders
+        agg: sum
+        expr: orders
+      - name: total_units
+        agg: sum
+        expr: units
+
+metrics:
+  - name: gmv
+    label: "GMV"
+    type: simple
+    type_params:
+      measure: total_gmv
+
+  - name: orders
+    label: "Orders"
+    type: simple
+    type_params:
+      measure: total_orders
+
+  - name: avg_order_value
+    label: "Average Order Value"
+    type: ratio
+    type_params:
+      numerator: gmv
+      denominator: orders

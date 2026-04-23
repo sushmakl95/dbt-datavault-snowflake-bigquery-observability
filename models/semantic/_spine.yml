@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: metricflow_time_spine
+    description: "Daily date spine consumed by dbt's semantic layer / MetricFlow."
+    columns:
+      - name: date_day
+        tests: [not_null, unique]

@@ -1,0 +1,9 @@
+customer_id,email,first_name,last_name,country,signup_ts,tier
+c-001,alice@example.com,Alice,Anderson,US,2024-11-10 09:00:00,gold
+c-002,bob@example.com,Bob,Brown,GB,2025-01-05 12:30:00,silver
+c-003,carol@example.com,Carol,Chen,IN,2025-03-14 18:45:00,bronze
+c-004,dan@example.com,Daniel,Davis,US,2025-06-22 07:15:00,silver
+c-005,eve@example.com,Eve,Evans,DE,2025-09-01 14:10:00,gold
+c-006,frank@example.com,Frank,Foster,FR,2025-12-11 11:00:00,silver
+c-007,grace@example.com,Grace,Gibson,IN,2026-01-02 10:00:00,bronze
+c-008,henry@example.com,Henry,Hughes,US,2026-02-18 16:30:00,gold

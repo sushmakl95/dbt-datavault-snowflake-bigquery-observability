@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: |
+          python -m pip install --upgrade pip
+          pip install ruff==0.4.4 yamllint==1.35.1
+      - name: Ruff (python sources)
+        run: ruff check spark scripts airflow
+      - name: yamllint
+        run: yamllint .
+      - name: Validate ASL JSON
+        run: |
+          python -c "import json, glob; [json.load(open(f)) for f in glob.glob('step_functions/*.asl.json')]; print('ASL OK')"
+      - name: Validate Control-M JSON
+        run: |
+          python -c "import json, glob; [json.load(open(f)) for f in glob.glob('control_m/jobs/*.json')]; print('CTM OK')"
+      - name: Validate Airflow DAG syntax
+        run: |
+          python -m py_compile airflow/dags/dbt_datavault.py airflow/dags/dbt_refresh_marts.py
+
+  dbt-build:
+    name: dbt build on DuckDB
+    runs-on: ubuntu-latest
+    needs: lint
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}/profiles
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install dbt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: dbt debug
+        run: dbt debug --target ci
+      - name: dbt deps
+        run: dbt deps
+      - name: dbt seed
+        run: dbt seed --target ci --full-refresh
+      - name: dbt run
+        run: dbt run --target ci
+      - name: dbt test
+        run: dbt test --target ci
+      - name: dbt docs generate
+        run: dbt docs generate --target ci
+      - name: Upload dbt artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts
+          path: |
+            target/manifest.json
+            target/run_results.json
+            target/catalog.json
+            target/index.html

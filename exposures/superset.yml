@@ -1,0 +1,28 @@
+version: 2
+
+exposures:
+  - name: superset_sales_vault
+    label: "Superset — Sales Vault dashboard"
+    type: dashboard
+    maturity: medium
+    url: http://localhost:8088/dashboard/sales-vault
+    description: "Executive-level view of daily GMV, customer tier mix, and product category trends."
+    depends_on:
+      - ref('fct_orders_daily')
+      - ref('dim_customers')
+      - ref('dim_products')
+      - ref('dim_date')
+    owner:
+      name: Sushma K L
+      email: sushmakl95@gmail.com
+
+  - name: tableau_export_sales_360
+    label: "Tableau — Sales 360 (exported)"
+    type: analysis
+    maturity: low
+    description: "Tableau workbook exported from Superset dataset spec. See docs/bi-export.md."
+    depends_on:
+      - ref('fct_orders_daily')
+    owner:
+      name: Sushma K L
+      email: sushmakl95@gmail.com

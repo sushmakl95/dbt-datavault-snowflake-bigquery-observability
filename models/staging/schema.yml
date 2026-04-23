@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Cleansed customer landing with DV hash keys (hk_customer) and hash_diff.
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+      - name: hk_customer
+        tests: [not_null]
+      - name: country
+        tests:
+          - accepted_values:
+              values: ["US", "GB", "IN", "DE", "FR"]
+      - name: tier
+        tests:
+          - accepted_values:
+              values: ["gold", "silver", "bronze"]
+
+  - name: stg_orders
+    description: Cleansed orders with DV hash keys and link hashes.
+    columns:
+      - name: order_id
+        tests: [not_null, unique]
+      - name: hk_order
+        tests: [not_null]
+      - name: hk_link_order_customer
+        tests: [not_null]
+      - name: currency
+        tests:
+          - accepted_values:
+              values: ["USD", "EUR", "GBP", "INR"]
+      - name: status
+        tests:
+          - accepted_values:
+              values: ["PLACED", "SHIPPED", "DELIVERED", "CANCELLED"]
+      - name: total
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+              strictly: false
+
+  - name: stg_products
+    description: Cleansed product catalog.
+    columns:
+      - name: product_id
+        tests: [not_null, unique]
+      - name: unit_price
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: true
+
+  - name: stg_order_lines
+    description: Cleansed order-line detail linking orders and products.
+    columns:
+      - name: hk_link_order_product
+        tests: [not_null]
+      - name: qty
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1

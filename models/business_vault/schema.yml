@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: pit_customer
+    description: "Point-in-Time table: one row per customer with latest satellite attributes."
+    columns:
+      - name: hk_customer
+        tests: [not_null, unique]
+      - name: customer_id
+        tests: [not_null]
+      - name: as_of_timestamp
+        tests: [not_null]
+
+  - name: bridge_order_lines
+    description: Denormalised bridge joining order-lines with order and product attributes.
+    columns:
+      - name: hk_link_order_product
+        tests: [not_null, unique]
+      - name: ds
+        tests: [not_null]
+      - name: line_total
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0

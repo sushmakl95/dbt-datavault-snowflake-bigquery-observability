@@ -1,0 +1,30 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Seeded raw landing tables populated by PySpark generator or upstream ingest.
+    schema: "{{ 'main_raw' if target.name == 'ci' else (target.schema ~ '_raw') }}"
+    tables:
+      - name: seed_raw_customers
+        identifier: seed_raw_customers
+        description: Landing customers from CRM.
+        columns:
+          - name: customer_id
+            tests: [not_null, unique]
+      - name: seed_raw_orders
+        identifier: seed_raw_orders
+        description: Landing orders from OLTP.
+        columns:
+          - name: order_id
+            tests: [not_null, unique]
+          - name: customer_id
+            tests: [not_null]
+      - name: seed_raw_products
+        identifier: seed_raw_products
+        description: Landing product catalog from CSV drops.
+        columns:
+          - name: product_id
+            tests: [not_null, unique]
+      - name: seed_raw_order_lines
+        identifier: seed_raw_order_lines
+        description: Landing order-line detail.

@@ -1,0 +1,28 @@
+{
+  "Defaults": {
+    "Folder::DV_MARTS_REFRESH": {
+      "Type": "Folder",
+      "ControlmServer": "ctm-prod",
+      "RunAs": "svc_dbt",
+      "Application": "Analytics",
+      "SubApplication": "Marts"
+    }
+  },
+  "DV_MARTS_REFRESH": {
+    "Type": "Folder",
+    "dbt_docs": {
+      "Type": "Job:Command",
+      "Command": "dbt docs generate --profiles-dir /opt/dbt/profiles --target prod",
+      "Host": "dbt-runner-01"
+    },
+    "invalidate_superset_cache": {
+      "Type": "Job:AWS:Lambda",
+      "FunctionName": "invalidate-superset-cache",
+      "Payload": "{\"datasets\":[\"fct_orders_daily\",\"dim_customers\",\"dim_products\"]}"
+    },
+    "Flow": {
+      "Type": "Flow",
+      "Sequence": ["dbt_docs", "invalidate_superset_cache"]
+    }
+  }
+}

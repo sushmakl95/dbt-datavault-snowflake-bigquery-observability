@@ -1,0 +1,16 @@
+{
+  "dashboard_title": "Sales Vault",
+  "slug": "sales-vault",
+  "metadata": {
+    "refresh_frequency": 300,
+    "color_scheme": "supersetColors"
+  },
+  "position_json": {},
+  "charts": [
+    {"slice_name": "GMV last 30d", "viz_type": "big_number_total", "dataset": "fct_orders_daily"},
+    {"slice_name": "Daily GMV trend", "viz_type": "line", "dataset": "fct_orders_daily"},
+    {"slice_name": "GMV by country", "viz_type": "world_map", "dataset": "fct_orders_daily"},
+    {"slice_name": "Status mix", "viz_type": "pie", "dataset": "fct_orders_daily"},
+    {"slice_name": "Top categories (units)", "viz_type": "bar", "dataset": "bridge_order_lines"}
+  ]
+}

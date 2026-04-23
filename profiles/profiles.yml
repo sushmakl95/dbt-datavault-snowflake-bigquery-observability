@@ -1,0 +1,50 @@
+datavault:
+  target: ci
+  outputs:
+    # -----------------------------------------------------------------------
+    # CI — DuckDB (zero-auth, hermetic).
+    # -----------------------------------------------------------------------
+    ci:
+      type: duckdb
+      path: "./ci_warehouse.duckdb"
+      threads: 4
+
+    # -----------------------------------------------------------------------
+    # Dev — Postgres on local docker-compose.
+    # -----------------------------------------------------------------------
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: 5432
+      user: "{{ env_var('POSTGRES_USER', 'dbt') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'dbt') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'analytics') }}"
+      schema: raw
+      threads: 4
+
+    # -----------------------------------------------------------------------
+    # Staging — BigQuery sandbox (free tier).
+    # -----------------------------------------------------------------------
+    stage:
+      type: bigquery
+      method: service-account-json
+      project: "{{ env_var('GCP_PROJECT', 'analytics-sandbox') }}"
+      dataset: datavault
+      threads: 4
+      location: US
+      keyfile_json: "{{ env_var('GCP_SERVICE_ACCOUNT_JSON', '{}') | as_native }}"
+
+    # -----------------------------------------------------------------------
+    # Prod — Snowflake.
+    # -----------------------------------------------------------------------
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'TRANSFORMER') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'ANALYTICS') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'TRANSFORMING') }}"
+      schema: datavault
+      threads: 8
+      client_session_keep_alive: false

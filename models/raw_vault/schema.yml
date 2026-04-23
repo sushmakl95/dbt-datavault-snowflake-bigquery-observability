@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: hub_customer
+    description: Customer hub — one row per unique customer business key.
+    columns:
+      - name: hk_customer
+        tests: [not_null, unique]
+      - name: customer_id
+        tests: [not_null, unique]
+
+  - name: hub_order
+    description: Order hub — one row per unique order business key.
+    columns:
+      - name: hk_order
+        tests: [not_null, unique]
+      - name: order_id
+        tests: [not_null, unique]
+
+  - name: hub_product
+    description: Product hub — one row per unique product.
+    columns:
+      - name: hk_product
+        tests: [not_null, unique]
+      - name: product_id
+        tests: [not_null, unique]
+
+  - name: link_order_customer
+    description: Link between orders and customers (many-to-one).
+    columns:
+      - name: hk_link_order_customer
+        tests: [not_null, unique]
+      - name: hk_order
+        tests:
+          - not_null
+          - relationships:
+              to: ref('hub_order')
+              field: hk_order
+      - name: hk_customer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('hub_customer')
+              field: hk_customer
+
+  - name: link_order_product
+    description: Link between orders and products (order line).
+    columns:
+      - name: hk_link_order_product
+        tests: [not_null, unique]
+      - name: hk_order
+        tests:
+          - not_null
+          - relationships:
+              to: ref('hub_order')
+              field: hk_order
+      - name: hk_product
+        tests:
+          - not_null
+          - relationships:
+              to: ref('hub_product')
+              field: hk_product
+
+  - name: sat_customer_details
+    description: Customer descriptive attributes with hash_diff-driven change detection.
+    columns:
+      - name: hk_customer
+        tests: [not_null]
+      - name: hd_customer_details
+        tests: [not_null]
+      - name: load_datetime
+        tests: [not_null]
+
+  - name: sat_order_details
+    description: Order descriptive + status attributes.
+    columns:
+      - name: hk_order
+        tests: [not_null]
+      - name: hd_order_details
+        tests: [not_null]
+
+  - name: sat_product_details
+    description: Product descriptive attributes including price and active flag.
+    columns:
+      - name: hk_product
+        tests: [not_null]
+      - name: hd_product_details
+        tests: [not_null]

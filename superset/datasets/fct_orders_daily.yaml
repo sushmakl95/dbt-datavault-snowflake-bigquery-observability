@@ -1,0 +1,25 @@
+datasets:
+  - name: fct_orders_daily
+    schema: marts
+    sql: |
+      select ds, country, currency, status, orders, gmv, unique_products, units
+      from marts.fct_orders_daily
+    metrics:
+      - metric_name: total_gmv
+        verbose_name: Total GMV
+        expression: "SUM(gmv)"
+      - metric_name: total_orders
+        verbose_name: Total Orders
+        expression: "SUM(orders)"
+      - metric_name: aov
+        verbose_name: Average Order Value
+        expression: "SUM(gmv) / NULLIF(SUM(orders), 0)"
+    columns:
+      - column_name: ds
+        type: DATE
+      - column_name: country
+        type: STRING
+      - column_name: currency
+        type: STRING
+      - column_name: status
+        type: STRING
